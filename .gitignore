@@ -1,2 +1,12 @@
 
 .DS_Store
+
+.idea/misc.xml
+
+.idea/modules.xml
+
+.idea/ps-mask_rcnn.iml
+
+.idea/vcs.xml
+
+.idea/workspace.xml

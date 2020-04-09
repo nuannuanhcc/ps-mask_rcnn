@@ -450,7 +450,7 @@ _C.TEST.BBOX_AUG.MAX_SIZE = 4000
 # Horizontal flip at each scale
 _C.TEST.BBOX_AUG.SCALE_H_FLIP = False
 
-
+_C.TEST.GALLERY_SIZE = 50
 # ---------------------------------------------------------------------------- #
 # Misc options
 # ---------------------------------------------------------------------------- #

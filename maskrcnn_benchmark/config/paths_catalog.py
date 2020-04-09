@@ -7,6 +7,36 @@ from copy import deepcopy
 class DatasetCatalog(object):
     DATA_DIR = "datasets"
     DATASETS = {
+        "sysu_train": {
+            "img_dir": "data/sysu/images",
+            "ann_file": "data/sysu/annotations/train.json",
+            "split": "train",
+        },
+        "sysu_val": {
+            "img_dir": "data/sysu/images",
+            "ann_file": "data/sysu/annotations/val.json",
+            "split": "val",
+        },
+        "sysu_test": {
+            "img_dir": "data/sysu/images",
+            "ann_file": "data/sysu/annotations/test.json",
+            "split": "test",
+        },
+        "prw_train": {
+            "img_dir": "data/prw/images",
+            "ann_file": "data/prw/annotations/train.json",
+            "split": "train",
+        },
+        "prw_val": {
+            "img_dir": "data/prw/images",
+            "ann_file": "data/prw/annotations/val.json",
+            "split": "val",
+        },
+        "prw_test": {
+            "img_dir": "data/prw/images",
+            "ann_file": "data/prw/annotations/test.json",
+            "split": "test",
+        },
         "coco_2017_train": {
             "img_dir": "coco/train2017",
             "ann_file": "coco/annotations/instances_train2017.json"
@@ -179,6 +209,28 @@ class DatasetCatalog(object):
             attrs["img_dir"] = os.path.join(data_dir, attrs["img_dir"])
             attrs["ann_dir"] = os.path.join(data_dir, attrs["ann_dir"])
             return dict(factory="CityScapesDataset", args=attrs)
+        elif "sysu" in name:
+            attrs = DatasetCatalog.DATASETS[name]
+            args = dict(
+                root=attrs["img_dir"],
+                ann_file=attrs["ann_file"],
+                split=attrs["split"],
+            )
+            return dict(
+                factory="SYSUDataset",
+                args=args,
+            )
+        elif "prw" in name:
+            attrs = DatasetCatalog.DATASETS[name]
+            args = dict(
+                root=attrs["img_dir"],
+                ann_file=attrs["ann_file"],
+                split=attrs["split"],
+            )
+            return dict(
+                factory="PRWDataset",
+                args=args,
+            )
         raise RuntimeError("Dataset not available: {}".format(name))
 
 

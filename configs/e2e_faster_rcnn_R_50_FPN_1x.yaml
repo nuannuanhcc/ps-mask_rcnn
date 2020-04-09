@@ -15,14 +15,17 @@ MODEL:
   ROI_HEADS:
     USE_FPN: True
   ROI_BOX_HEAD:
+    NUM_CLASSES: 2
     POOLER_RESOLUTION: 7
     POOLER_SCALES: (0.25, 0.125, 0.0625, 0.03125)
     POOLER_SAMPLING_RATIO: 2
     FEATURE_EXTRACTOR: "FPN2MLPFeatureExtractor"
     PREDICTOR: "FPNPredictor"
+  RETINANET:
+    NUM_CLASSES: 2
 DATASETS:
-  TRAIN: ("coco_2014_train", "coco_2014_valminusminival")
-  TEST: ("coco_2014_minival",)
+  TRAIN: ("sysu_train",) # sysu_train, prw_train
+  TEST: ("sysu_test",) # sysu_test, prw_test
 DATALOADER:
   SIZE_DIVISIBILITY: 32
 SOLVER:
