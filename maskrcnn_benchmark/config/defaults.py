@@ -134,7 +134,7 @@ _C.MODEL.RPN.ANCHOR_SIZES = (32, 64, 128, 256, 512)
 # For FPN, number of strides should match number of scales
 _C.MODEL.RPN.ANCHOR_STRIDE = (16,)
 # RPN anchor aspect ratios
-_C.MODEL.RPN.ASPECT_RATIOS = (0.5, 1.0, 2.0)
+_C.MODEL.RPN.ASPECT_RATIOS = (1.0, 2.0, 3.0)
 # Remove RPN anchors that go outside the image by RPN_STRADDLE_THRESH pixels
 # Set to -1 or a large value, e.g. 100000, to disable pruning anchors
 _C.MODEL.RPN.STRADDLE_THRESH = 0

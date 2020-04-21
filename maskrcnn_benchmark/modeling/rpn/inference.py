@@ -165,7 +165,8 @@ class RPNPostProcessor(torch.nn.Module):
             box_sizes = [len(boxlist) for boxlist in boxlists]
             post_nms_top_n = min(self.fpn_post_nms_top_n, len(objectness))
             _, inds_sorted = torch.topk(objectness, post_nms_top_n, dim=0, sorted=True)
-            inds_mask = torch.zeros_like(objectness, dtype=torch.bool)
+            bool_type = torch.bool if float(torch.__version__[:3]) >= 1.2 else torch.uint8
+            inds_mask = torch.zeros_like(objectness, dtype=bool_type)
             inds_mask[inds_sorted] = 1
             inds_mask = inds_mask.split(box_sizes)
             for i in range(num_images):
