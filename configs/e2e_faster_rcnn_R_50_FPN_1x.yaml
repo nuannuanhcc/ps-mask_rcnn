@@ -20,12 +20,13 @@ MODEL:
     POOLER_SCALES: (0.25, 0.125, 0.0625, 0.03125)
     POOLER_SAMPLING_RATIO: 2
     FEATURE_EXTRACTOR: "FPN2MLPFeatureExtractor"
+#    FEATURE_EXTRACTOR: "FPNXconv1fcFeatureExtractor"
     PREDICTOR: "FPNPredictor"
   RETINANET:
     NUM_CLASSES: 2
 DATASETS:
   TRAIN: ("sysu_train",) # sysu_train, prw_train
-  TEST: ("sysu_test",) # sysu_test, prw_test
+  TEST: ("sysu_test", "sysu_query",) # sysu_test, sysu_query, prw_test, prw_query
 DATALOADER:
   SIZE_DIVISIBILITY: 32
 SOLVER:
@@ -33,3 +34,7 @@ SOLVER:
   WEIGHT_DECAY: 0.0001
   STEPS: (30000, 40000)
   MAX_ITER: 45000
+REID:
+  USE_REID: True
+  OUT_CHANNELS: 2048
+  USE_DIFF_FEAT: True

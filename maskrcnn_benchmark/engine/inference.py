@@ -14,7 +14,7 @@ from ..utils.timer import Timer, get_time_str
 from .bbox_aug import im_detect_bbox_aug
 
 
-def compute_on_dataset(model, data_loader, device, bbox_aug, timer=None):
+def compute_on_dataset(model, data_loader, device, bbox_aug, timer=None, use_target=None):
     model.eval()
     results_dict = {}
     cpu_device = torch.device("cpu")
@@ -26,7 +26,11 @@ def compute_on_dataset(model, data_loader, device, bbox_aug, timer=None):
             if bbox_aug:
                 output = im_detect_bbox_aug(model, images, device)
             else:
-                output = model(images.to(device))
+                if use_target:
+                    targets = [target.to(device) for target in targets]
+                    output = model(images.to(device), targets)
+                else:
+                    output = model(images.to(device))
             if timer:
                 if not device.type == 'cpu':
                     torch.cuda.synchronize()
@@ -116,5 +120,77 @@ def inference(
 
     return evaluate(dataset=dataset,
                     predictions=predictions,
+                    output_folder=output_folder,
+                    **extra_args)
+
+
+def inference_reid(
+        model,
+        data_loader,
+        dataset_name,
+        iou_types=("bbox",),
+        box_only=False,
+        bbox_aug=False,
+        device="cuda",
+        expected_results=(),
+        expected_results_sigma_tol=4,
+        output_folder=None,
+):
+
+    # convert to a torch.device for efficiency
+    device = torch.device(device)
+    num_devices = get_world_size()
+    logger = logging.getLogger("maskrcnn_benchmark.inference")
+
+    gallery_data_loader = data_loader[0]
+    query_data_loader = data_loader[1]
+    gallery_dataset = gallery_data_loader.dataset
+    query_dataset = query_data_loader.dataset
+
+    logger.info("Start evaluation on {} dataset {} images, {} dataset {} images).".format
+                (dataset_name[0], len(gallery_dataset), dataset_name[1], len(query_dataset)))
+    total_timer = Timer()
+    inference_timer = Timer()
+    total_timer.tic()
+    gallery_predictions = compute_on_dataset(model, gallery_data_loader, device, bbox_aug, inference_timer)
+    query_predictions = compute_on_dataset(model, query_data_loader, device, bbox_aug, inference_timer, True)
+
+    # wait for all processes to complete before measuring the time
+    synchronize()
+    total_time = total_timer.toc()
+    total_time_str = get_time_str(total_time)
+    logger.info(
+        "Total run time: {} ({} s / img per device, on {} devices)".format(
+            total_time_str, total_time * num_devices / (len(gallery_dataset)+len(query_dataset)), num_devices
+        )
+    )
+    total_infer_time = get_time_str(inference_timer.total_time)
+    logger.info(
+        "Model inference time: {} ({} s / img per device, on {} devices)".format(
+            total_infer_time,
+            inference_timer.total_time * num_devices / (len(gallery_dataset)+len(query_dataset)),
+            num_devices,
+        )
+    )
+
+    gallery_predictions = _accumulate_predictions_from_multiple_gpus(gallery_predictions)
+    query_predictions = _accumulate_predictions_from_multiple_gpus(query_predictions)
+
+    if not is_main_process():
+        return
+
+    if output_folder:
+        torch.save(gallery_predictions, os.path.join(output_folder, "gallery_predictions.pth"))
+        torch.save(query_predictions, os.path.join(output_folder, "query_predictions.pth"))
+
+    extra_args = dict(
+        box_only=box_only,
+        iou_types=iou_types,
+        expected_results=expected_results,
+        expected_results_sigma_tol=expected_results_sigma_tol,
+    )
+
+    return evaluate(dataset=[gallery_dataset, query_dataset],
+                    predictions=[gallery_predictions, query_predictions],
                     output_folder=output_folder,
                     **extra_args)

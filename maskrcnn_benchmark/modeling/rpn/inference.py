@@ -67,7 +67,7 @@ class RPNPostProcessor(torch.nn.Module):
             gt_box.add_field("objectness", torch.ones(len(gt_box), device=device))
 
         proposals = [
-            cat_boxlist((proposal, gt_box))
+            cat_boxlist((gt_box, proposal))
             for proposal, gt_box in zip(proposals, gt_boxes)
         ]
 

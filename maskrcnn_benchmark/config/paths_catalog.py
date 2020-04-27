@@ -22,6 +22,11 @@ class DatasetCatalog(object):
             "ann_file": "data/sysu/annotations/test.json",
             "split": "test",
         },
+        "sysu_query": {
+            "img_dir": "data/sysu/images",
+            "ann_file": "data/sysu/annotations/query.json",
+            "split": "query",
+        },
         "prw_train": {
             "img_dir": "data/prw/images",
             "ann_file": "data/prw/annotations/train.json",
@@ -36,6 +41,11 @@ class DatasetCatalog(object):
             "img_dir": "data/prw/images",
             "ann_file": "data/prw/annotations/test.json",
             "split": "test",
+        },
+        "prw_query": {
+            "img_dir": "data/prw/images",
+            "ann_file": "data/prw/annotations/query.json",
+            "split": "query",
         },
         "coco_2017_train": {
             "img_dir": "coco/train2017",

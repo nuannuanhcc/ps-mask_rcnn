@@ -8,10 +8,14 @@ MODEL:
     NUM_CLASSES: 2
 DATASETS:
   TRAIN: ("sysu_train",) # sysu_train, prw_train
-  TEST: ("sysu_test",) # sysu_test, prw_test
+  TEST: ("sysu_test", "sysu_query",) # sysu_test, sysu_query, prw_test, prw_query
 SOLVER:
   BASE_LR: 0.01
   WEIGHT_DECAY: 0.0001
   STEPS: (30000, 40000)
   MAX_ITER: 45000
   IMS_PER_BATCH: 8
+REID:
+  USE_REID: True
+  OUT_CHANNELS: 2048
+  USE_DIFF_FEAT: True
