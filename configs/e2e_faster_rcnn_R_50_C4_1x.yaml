@@ -1,11 +1,19 @@
 MODEL:
   META_ARCHITECTURE: "GeneralizedRCNN"
   WEIGHT: "catalog://ImageNetPretrained/MSRA/R-50"
+  BACKBONE:
+    CONV_BODY: "R-50-C4"
+  RESNETS:
+    BACKBONE_OUT_CHANNELS: 1024
   RPN:
     PRE_NMS_TOP_N_TEST: 6000
     POST_NMS_TOP_N_TEST: 1000
   ROI_BOX_HEAD:
     NUM_CLASSES: 2
+    POOLER_RESOLUTION: 14
+    POOLER_SCALES: (0.0625,)
+    FEATURE_EXTRACTOR: "ResNet50Conv5ROIFeatureExtractor"
+    PREDICTOR: "FastRCNNPredictor"
 DATASETS:
   TRAIN: ("sysu_train",) # sysu_train, prw_train
   TEST: ("sysu_test", "sysu_query",) # sysu_test, sysu_query, prw_test, prw_query
@@ -18,4 +26,5 @@ SOLVER:
 REID:
   USE_REID: True
   OUT_CHANNELS: 2048
+  LOSS_SCALE: 0.7
   USE_DIFF_FEAT: True

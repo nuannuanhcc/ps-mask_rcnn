@@ -460,6 +460,7 @@ _C.REID.USE_REID = False
 _C.REID.OUT_CHANNELS = 2048
 _C.REID.USE_RES3_4 = False
 _C.REID.USE_DIFF_FEAT = False
+_C.REID.LOSS_SCALE = 1.0
 
 # ---------------------------------------------------------------------------- #
 # Misc options

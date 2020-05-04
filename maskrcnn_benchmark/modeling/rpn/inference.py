@@ -142,7 +142,7 @@ class RPNPostProcessor(torch.nn.Module):
         boxlists = list(zip(*sampled_boxes))
         boxlists = [cat_boxlist(boxlist) for boxlist in boxlists]
 
-        if num_levels > 1:
+        if num_levels >= 1:
             boxlists = self.select_over_all_levels(boxlists)
 
         # append ground-truth bboxes to proposals

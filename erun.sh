@@ -11,4 +11,4 @@ python -m torch.distributed.launch --nproc_per_node=$NGPUS ./tools/test_net.py \
 
  # e2e_faster_rcnn_R_50_FPN_1x.yaml
  # e2e_faster_rcnn_R_50_C4_1x.yaml
- # e2e_faster_rcnn_R_50_C3_4.yaml
+ # e2e_faster_rcnn_R_50_C5_1x.yaml

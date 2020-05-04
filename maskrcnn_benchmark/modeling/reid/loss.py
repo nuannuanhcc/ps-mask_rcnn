@@ -85,7 +85,7 @@ class OIMLossComputation(nn.Module):
 
         scalar = 10
         loss_reid = F.cross_entropy(reid_result * scalar, pid_label, weight=loss_weight, ignore_index=-1)
-        return loss_reid
+        return loss_reid * self.cfg.REID.LOSS_SCALE
 
 
 def make_reid_loss_evaluator(cfg):
