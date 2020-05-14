@@ -21,13 +21,13 @@ class REIDModule(torch.nn.Module):
         self.loss_evaluator = make_reid_loss_evaluator(cfg)
 
     def forward(self, features, results, targets):
-        if not self.training and targets is None:
+        if not self.cfg.MODEL.RETINANET_ON and not self.training and targets is None:
             inds = [result.get_field('index') for result in results]
             feats = torch.cat([feat[ind] for (feat, ind) in zip(features, inds)])
         else:
             feats = features
 
-        feats = self.feature_extractor(feats)
+        feats = self.feature_extractor(feats, results)
         feats = F.normalize(feats, dim=-1)
 
         num_feats = 0

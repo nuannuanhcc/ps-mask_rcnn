@@ -52,9 +52,25 @@ class RetinaNetPostProcessor(RPNPostProcessor):
  
     def add_gt_proposals(self, proposals, targets):
         """
-        This function is not used in RetinaNet
+        Arguments:
+            proposals: list[BoxList]
+            targets: list[BoxList]
         """
-        pass
+        # Get the device we're operating on
+        device = proposals[0].bbox.device
+
+        gt_boxes = [target.copy_with_fields(["pid", "labels"]) for target in targets]
+
+        # later cat of bbox requires all fields to be present for all bbox
+        # so we need to add a dummy for objectness that's missing
+        for gt_box in gt_boxes:
+            gt_box.add_field("scores", torch.ones(len(gt_box), device=device))
+
+        proposals = [
+            cat_boxlist((gt_box, proposal))
+            for proposal, gt_box in zip(proposals, gt_boxes)
+        ]
+        return proposals
 
     def forward_for_single_feature_map(
             self, anchors, box_cls, box_regression):
@@ -117,6 +133,7 @@ class RetinaNetPostProcessor(RPNPostProcessor):
             boxlist = BoxList(detections, per_anchors.size, mode="xyxy")
             boxlist.add_field("labels", per_class)
             boxlist.add_field("scores", per_box_cls)
+            boxlist.add_field("pid", -torch.ones(len(detections) * 2, device=device, dtype=torch.int32))
             boxlist = boxlist.clip_to_image(remove_empty=False)
             boxlist = remove_small_boxes(boxlist, self.min_size)
             results.append(boxlist)
@@ -133,6 +150,7 @@ class RetinaNetPostProcessor(RPNPostProcessor):
         for i in range(num_images):
             scores = boxlists[i].get_field("scores")
             labels = boxlists[i].get_field("labels")
+            pid = boxlists[i].get_field("pid")
             boxes = boxlists[i].bbox
             boxlist = boxlists[i]
             result = []
@@ -140,10 +158,12 @@ class RetinaNetPostProcessor(RPNPostProcessor):
             for j in range(1, self.num_classes):
                 inds = (labels == j).nonzero().view(-1)
 
+                pid_j = pid[inds]
                 scores_j = scores[inds]
                 boxes_j = boxes[inds, :].view(-1, 4)
                 boxlist_for_class = BoxList(boxes_j, boxlist.size, mode="xyxy")
                 boxlist_for_class.add_field("scores", scores_j)
+                boxlist_for_class.add_field("pid", pid_j)
                 boxlist_for_class = boxlist_nms(
                     boxlist_for_class, self.nms_thresh,
                     score_field="scores"
@@ -177,7 +197,10 @@ def make_retinanet_postprocessor(config, rpn_box_coder, is_train):
     pre_nms_thresh = config.MODEL.RETINANET.INFERENCE_TH
     pre_nms_top_n = config.MODEL.RETINANET.PRE_NMS_TOP_N
     nms_thresh = config.MODEL.RETINANET.NMS_TH
-    fpn_post_nms_top_n = config.TEST.DETECTIONS_PER_IMG
+    if is_train:
+        fpn_post_nms_top_n = config.MODEL.RETINANET.DETECTIONS_PER_IMG
+    else:
+        fpn_post_nms_top_n = config.TEST.DETECTIONS_PER_IMG
     min_size = 0
 
     box_selector = RetinaNetPostProcessor(
