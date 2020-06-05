@@ -1,7 +1,7 @@
-export DIR="./train_log/test"
+export DIR="./train_log/6_1_6"
 export NGPUS=1
 export LR=$(echo "$NGPUS*0.001"|bc)
-export BATCH=$(echo "$NGPUS*8"|bc)
+export BATCH=$(echo "$NGPUS*4"|bc)
 
 python -m torch.distributed.launch --nproc_per_node=$NGPUS ./tools/train_net.py \
 --config-file "./configs/retinanet/retinanet_R-50-FPN_P5_1x.yaml" \

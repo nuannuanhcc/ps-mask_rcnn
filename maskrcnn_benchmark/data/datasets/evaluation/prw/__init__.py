@@ -21,7 +21,7 @@ def prw_evaluation_reid(dataset, predictions, output_folder, box_only, **_):
     if box_only:
         logger.warning("prw evaluation doesn't support box_only, ignored.")
     logger.info("performing prw evaluation---person search, ignored iou_types.")
-    return do_prw_evaluation(
+    return do_prw_evaluation_reid(
         dataset=dataset,
         predictions=predictions,
         output_folder=output_folder,
