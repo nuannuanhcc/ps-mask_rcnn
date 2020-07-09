@@ -93,19 +93,18 @@ class OIMLossComputation(nn.Module):
         self.register_buffer('queue', torch.zeros(self.queue_size, self.out_channels).cuda())
 
     def forward(self, features, results, targets):
-
         gt_box_pre_img = [len(i) for i in targets]
         features = [result.get_field('reid_feat') for result in results]
         pids = [result.get_field('pid') for result in results]
 
         gt_features = [feat[:n] for (n, feat) in zip(gt_box_pre_img, features)]
-        de_features = [feat[n:] for (n, feat) in zip(gt_box_pre_img, features)]
+        # de_features = [feat[n:] for (n, feat) in zip(gt_box_pre_img, features)]
 
         gt_pids = [pid[:n] for (n, pid) in zip(gt_box_pre_img, pids)]
-        de_pids = [pid[n:] for (n, pid) in zip(gt_box_pre_img, pids)]
+        # de_pids = [pid[n:] for (n, pid) in zip(gt_box_pre_img, pids)]
 
-        features = torch.cat(gt_features+de_features)
-        pids = torch.cat(gt_pids+de_pids)
+        features = torch.cat(gt_features)#+de_features)
+        pids = torch.cat(gt_pids)#+de_pids)
         aux_label = pids  # threshold<0.7 pid=-2
 
         aux_label_np = aux_label.data.cpu().numpy()

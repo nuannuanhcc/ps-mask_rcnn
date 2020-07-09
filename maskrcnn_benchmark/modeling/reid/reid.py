@@ -18,7 +18,7 @@ class REIDModule(torch.nn.Module):
         self.cfg = cfg.clone()
 
         self.feature_extractor = make_reid_feature_extractor(cfg)
-        self.loss_evaluator = make_reid_loss_evaluator(cfg)
+        # self.loss_evaluator = make_reid_loss_evaluator(cfg)
 
     def forward(self, features, results, targets):
         if not self.cfg.MODEL.RETINANET_ON and not self.training and targets is None:
@@ -37,11 +37,11 @@ class REIDModule(torch.nn.Module):
             num_feats += l_res
 
         if not self.training:
-            return feats, results, {}
+            return feats, results
 
-        loss_reid = self.loss_evaluator(feats, results, targets)
-        losses = {"loss_reid": loss_reid, }
-        return feats, results, losses
+        # loss_reid = self.loss_evaluator(feats, results, targets)
+        # losses = {"loss_reid": loss_reid, }
+        return feats, results
 
 def build_reid(cfg):
     """

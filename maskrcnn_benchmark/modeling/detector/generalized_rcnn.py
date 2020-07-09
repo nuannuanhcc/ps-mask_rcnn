@@ -62,14 +62,12 @@ class GeneralizedRCNN(nn.Module):
             detector_losses = {}
 
         if self.cfg.REID.USE_REID:
-            x, result, reid_losses = self.reid_heads(x, result, targets)
-        else:
-            reid_losses = {}
+            x, result = self.reid_heads(x, result, targets)
+
         if self.training:
             losses = {}
             losses.update(detector_losses)
             losses.update(proposal_losses)
-            losses.update(reid_losses)
-            return losses
+            return losses, [x, result, targets]
 
         return result

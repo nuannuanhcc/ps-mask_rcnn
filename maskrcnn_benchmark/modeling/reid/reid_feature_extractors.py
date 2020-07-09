@@ -55,7 +55,7 @@ class FPN2MLPFeatureExtractor(nn.Module):
         self.cfg = cfg
         self.in_channels = 1024
         self.out_channels = cfg.REID.OUT_CHANNELS
-        self.fc = make_fc(self.in_channels, self.out_channels)
+        # self.fc = make_fc(self.in_channels, self.out_channels)
 
         if self.cfg.REID.USE_DIFF_FEAT:
             resolution = cfg.MODEL.ROI_BOX_HEAD.POOLER_RESOLUTION
@@ -63,8 +63,8 @@ class FPN2MLPFeatureExtractor(nn.Module):
             input_size = in_channels * resolution ** 2
             representation_size = cfg.MODEL.ROI_BOX_HEAD.MLP_HEAD_DIM
             use_gn = cfg.MODEL.ROI_BOX_HEAD.USE_GN
-            self.fc6 = make_fc(input_size, representation_size, use_gn)
-            self.fc7 = make_fc(representation_size, representation_size, use_gn)
+            self.fc = make_fc(input_size, self.out_channels, use_gn)
+            # self.fc7 = make_fc(representation_size, representation_size, use_gn)
 
         if self.cfg.MODEL.RETINANET_ON:
             scales = cfg.MODEL.ROI_BOX_HEAD.POOLER_SCALES
@@ -80,9 +80,9 @@ class FPN2MLPFeatureExtractor(nn.Module):
         if self.cfg.MODEL.RETINANET_ON:
             x = self.pooler(x, proposals)
             x = x.view(x.size(0), -1)
-        if self.cfg.REID.USE_DIFF_FEAT:
-            x = F.relu(self.fc6(x))
-            x = F.relu(self.fc7(x))
+        # if self.cfg.REID.USE_DIFF_FEAT:
+        #     x = F.relu(self.fc6(x))
+        #     x = F.relu(self.fc7(x))
         x = self.fc(x)
         return x
 
