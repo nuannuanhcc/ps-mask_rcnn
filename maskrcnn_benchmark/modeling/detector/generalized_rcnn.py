@@ -35,7 +35,7 @@ class GeneralizedRCNN(nn.Module):
         if self.cfg.REID.USE_REID:
             self.reid_heads = build_reid(cfg)
 
-    def forward(self, images, targets=None):
+    def forward(self, images, targets=None, moco_flag=False):
         """
         Arguments:
             images (list[Tensor] or ImageList): images to be processed
@@ -52,6 +52,15 @@ class GeneralizedRCNN(nn.Module):
             raise ValueError("In training mode, targets should be passed")
         images = to_image_list(images)
         features = self.backbone(images.tensors)
+
+        if self.training and moco_flag:
+            result = targets
+            device = result[0].bbox.device
+            for gt in result:
+                gt.add_field("scores", torch.ones(len(gt), device=device))
+            x, result = self.reid_heads(features, result, targets)
+            return [x, result, targets]
+
         proposals, proposal_losses = self.rpn(images, features, targets)
         if self.roi_heads:
             x, result, detector_losses = self.roi_heads(features, proposals, targets)
