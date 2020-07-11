@@ -9,8 +9,8 @@ import numpy  as np
 def circle_loss(
     sim_ap: torch.Tensor,
     sim_an: torch.Tensor,
-    scale: float = 16.0,
-    margin: float = 0.4,
+    scale: float = 12.0,
+    margin: float = 0.1,
     redection: str = "mean"
 ):
     pair_ap = -scale * (sim_ap - margin)
