@@ -1,6 +1,6 @@
-export DIR="./train_log/7_11_1"
+export DIR="./train_log/7_11_2"
 export NGPUS=1
-export LR=$(echo "$NGPUS*0.001"|bc)
+export LR=$(echo "$NGPUS*0.002"|bc)
 export BATCH=$(echo "$NGPUS*4"|bc)
 
 python -m torch.distributed.launch --nproc_per_node=$NGPUS ./tools/train_net.py \
