@@ -9,7 +9,7 @@ import numpy  as np
 def circle_loss(
     sim_ap: torch.Tensor,
     sim_an: torch.Tensor,
-    scale: float = 21.0,
+    scale: float = 23.0,
     margin: float = 0.0,
     redection: str = "mean"
 ):
