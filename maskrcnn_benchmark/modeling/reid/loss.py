@@ -9,7 +9,7 @@ import numpy  as np
 def circle_loss(
     sim_ap: torch.Tensor,
     sim_an: torch.Tensor,
-    scale: float = 23.0,
+    scale: float = 16.0,
     margin: float = 0.0,
     redection: str = "mean"
 ):
@@ -128,8 +128,8 @@ class CIRCLELossComputation(nn.Module):
         self.cfg = cfg.clone()
 
         if 'sysu' in self.cfg.DATASETS.TRAIN[0]:
-            num_labeled = 8192
-            num_unlabeled = 8192
+            num_labeled = 2048
+            num_unlabeled = 2048
         elif 'prw' in self.cfg.DATASETS.TRAIN[0]:
             num_labeled = 8192
             num_unlabeled = 8192
