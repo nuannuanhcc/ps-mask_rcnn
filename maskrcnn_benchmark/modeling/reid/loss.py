@@ -128,8 +128,8 @@ class CIRCLELossComputation(nn.Module):
         self.cfg = cfg.clone()
 
         if 'sysu' in self.cfg.DATASETS.TRAIN[0]:
-            num_labeled = 8192
-            num_unlabeled = 8192
+            num_labeled = 16384
+            num_unlabeled = 0
         elif 'prw' in self.cfg.DATASETS.TRAIN[0]:
             num_labeled = 8192
             num_unlabeled = 8192
@@ -186,14 +186,14 @@ class CIRCLELossComputation(nn.Module):
         self.lut, _ = update_queue(self.lut, self.pointer[0], feat_labeled_k)
 
         self.id_inx, self.pointer[0] = update_queue(self.id_inx, self.pointer[0], id_labeled_k)
-        self.queue, self.pointer[1] = update_queue(self.queue, self.pointer[1], feat_unlabeled_k)
+        # self.queue, self.pointer[1] = update_queue(self.queue, self.pointer[1], feat_unlabeled_k)
 
-        queue_sim = torch.mm(feat_labeled, self.queue.t())
+        # queue_sim = torch.mm(feat_labeled, self.queue.t())
         lut_sim = torch.mm(feat_labeled, self.lut.t())
         positive_mask = id_labeled.view(-1, 1) == self.id_inx.view(1, -1)
         sim_ap = lut_sim.masked_fill(~positive_mask, float("inf"))
         sim_an = lut_sim.masked_fill(positive_mask, float("-inf"))
-        sim_an = torch.cat((queue_sim, sim_an), dim=-1)
+        # sim_an = torch.cat((queue_sim, sim_an), dim=-1)
 
         pair_loss = circle_loss(sim_ap, sim_an)
         return pair_loss
