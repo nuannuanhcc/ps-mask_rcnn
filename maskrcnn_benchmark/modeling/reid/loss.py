@@ -51,7 +51,7 @@ class OIMLossComputation(nn.Module):
         else:
             raise KeyError(cfg.DATASETS.TRAIN)
 
-        self.lut_momentum = 0.0
+        self.lut_momentum = 0.5
         self.out_channels = self.cfg.REID.OUT_CHANNELS
 
         self.register_buffer('lut', torch.zeros(self.num_pid, self.out_channels).cuda())

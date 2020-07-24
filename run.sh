@@ -1,7 +1,7 @@
-export DIR="./train_log/4_20_2"
+export DIR="./train_log/7_24_1"
 export NGPUS=1
 export LR=$(echo "$NGPUS*0.001"|bc)
-export BATCH=$(echo "$NGPUS*8"|bc)
+export BATCH=$(echo "$NGPUS*4"|bc)
 
 python -m torch.distributed.launch --nproc_per_node=$NGPUS ./tools/train_net.py \
 --config-file "./configs/e2e_faster_rcnn_R_50_FPN_1x.yaml" \
