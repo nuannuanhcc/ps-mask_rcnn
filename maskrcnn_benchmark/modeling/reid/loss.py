@@ -69,8 +69,8 @@ class OIMLossComputation(nn.Module):
         gt_pids = [pid[:n] for (n, pid) in zip(gt_box_pre_img, pids)]
         de_pids = [pid[n:] for (n, pid) in zip(gt_box_pre_img, pids)]
 
-        features = torch.cat(gt_features + de_features)
-        pids = torch.cat(gt_pids + de_pids)
+        features = torch.cat(gt_features)
+        pids = torch.cat(gt_pids)
         aux_label = pids  # threshold<0.7 pid=-2
 
         aux_label_np = aux_label.data.cpu().numpy()
