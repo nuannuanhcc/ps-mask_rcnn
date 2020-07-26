@@ -131,10 +131,10 @@ class RPNModule(torch.nn.Module):
         retina_box_coder = BoxCoder(weights=(10., 10., 5., 5.))
 
         # box_selector_train = make_rpn_postprocessor(cfg, rpn_box_coder, is_train=True)
-        box_selector_train = make_retinanet_postprocessor(cfg, rpn_box_coder, is_train=True)
-        box_selector_test = make_retinanet_postprocessor(cfg, rpn_box_coder, is_train=False)
+        box_selector_train = make_retinanet_postprocessor(cfg, retina_box_coder, is_train=True)
+        box_selector_test = make_retinanet_postprocessor(cfg, retina_box_coder, is_train=False)
 
-        loss_evaluator = make_rpn_loss_evaluator(cfg, rpn_box_coder)
+        loss_evaluator = make_rpn_loss_evaluator(cfg, retina_box_coder)
         # loss_evaluator = make_retinanet_loss_evaluator(cfg, rpn_box_coder)
 
         self.anchor_generator = anchor_generator
