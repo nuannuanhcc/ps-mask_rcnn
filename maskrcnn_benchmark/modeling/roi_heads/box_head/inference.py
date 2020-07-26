@@ -54,26 +54,19 @@ class PostProcessor(nn.Module):
             results (list[BoxList]): one BoxList for each image, containing
                 the extra fields labels and scores
         """
-        objectness_fg = torch.cat([b.extra_fields['objectness'] for b in boxes])
-        objectness_bg = 1.0 - objectness_fg
-        class_prob = torch.cat([objectness_bg.unsqueeze(-1), objectness_fg.unsqueeze(-1)], dim=-1)
-
-        bbox_fg = torch.cat([b.bbox for b in boxes])
-        proposals = torch.cat([bbox_fg, bbox_fg], dim=-1)
-
-        # class_logits, box_regression = x
-        # class_prob = F.softmax(class_logits, -1)
+        class_logits, box_regression = x
+        class_prob = F.softmax(class_logits, -1)
 
         # TODO think about a representation of batch of boxes
         image_shapes = [box.size for box in boxes]
         boxes_per_image = [len(box) for box in boxes]
-        # concat_boxes = torch.cat([a.bbox for a in boxes], dim=0)
+        concat_boxes = torch.cat([a.bbox for a in boxes], dim=0)
 
-        # if self.cls_agnostic_bbox_reg:
-        #     box_regression = box_regression[:, -4:]
-        # proposals = self.box_coder.decode(
-        #     box_regression.view(sum(boxes_per_image), -1), concat_boxes
-        # )
+        if self.cls_agnostic_bbox_reg:
+            box_regression = box_regression[:, -4:]
+        proposals = self.box_coder.decode(
+            box_regression.view(sum(boxes_per_image), -1), concat_boxes
+        )
         if self.cls_agnostic_bbox_reg:
             proposals = proposals.repeat(1, class_prob.shape[1])
 
