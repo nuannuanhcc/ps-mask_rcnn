@@ -24,6 +24,10 @@ MODEL:
     PREDICTOR: "FPNPredictor"
   RETINANET:
     NUM_CLASSES: 2
+    SCALES_PER_OCTAVE: 3
+    STRADDLE_THRESH: -1
+    FG_IOU_THRESHOLD: 0.5
+    BG_IOU_THRESHOLD: 0.4
 DATASETS:
   TRAIN: ("sysu_train",) # sysu_train, prw_train
   TEST: ("sysu_test", "sysu_query",) # sysu_test, sysu_query, prw_test, prw_query

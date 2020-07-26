@@ -9,6 +9,9 @@ from maskrcnn_benchmark.modeling.rpn.retinanet.retinanet import build_retinanet
 from .loss import make_rpn_loss_evaluator
 from .anchor_generator import make_anchor_generator
 from .inference import make_rpn_postprocessor
+from .retinanet.inference import make_retinanet_postprocessor
+from .retinanet.loss import make_retinanet_loss_evaluator
+from .retinanet.retinanet_box_subsample import make_retinanet_box_subsample
 
 
 class RPNHeadConvRegressor(nn.Module):
@@ -125,17 +128,21 @@ class RPNModule(torch.nn.Module):
         )
 
         rpn_box_coder = BoxCoder(weights=(1.0, 1.0, 1.0, 1.0))
+        retina_box_coder = BoxCoder(weights=(10., 10., 5., 5.))
 
-        box_selector_train = make_rpn_postprocessor(cfg, rpn_box_coder, is_train=True)
-        box_selector_test = make_rpn_postprocessor(cfg, rpn_box_coder, is_train=False)
+        # box_selector_train = make_rpn_postprocessor(cfg, rpn_box_coder, is_train=True)
+        box_selector_train = make_retinanet_postprocessor(cfg, rpn_box_coder, is_train=True)
+        box_selector_test = make_retinanet_postprocessor(cfg, rpn_box_coder, is_train=False)
 
         loss_evaluator = make_rpn_loss_evaluator(cfg, rpn_box_coder)
+        # loss_evaluator = make_retinanet_loss_evaluator(cfg, rpn_box_coder)
 
         self.anchor_generator = anchor_generator
         self.head = head
         self.box_selector_train = box_selector_train
         self.box_selector_test = box_selector_test
         self.loss_evaluator = loss_evaluator
+        self.box_subsumple = make_retinanet_box_subsample(cfg)
 
     def forward(self, images, features, targets=None):
         """
@@ -157,6 +164,8 @@ class RPNModule(torch.nn.Module):
 
         if self.training:
             return self._forward_train(anchors, objectness, rpn_box_regression, targets)
+        elif targets is not None:
+            return targets, {}
         else:
             return self._forward_test(anchors, objectness, rpn_box_regression)
 
@@ -174,6 +183,7 @@ class RPNModule(torch.nn.Module):
                 boxes = self.box_selector_train(
                     anchors, objectness, rpn_box_regression, targets
                 )
+                boxes = self.box_subsumple(boxes, targets)
         loss_objectness, loss_rpn_box_reg = self.loss_evaluator(
             anchors, objectness, rpn_box_regression, targets
         )

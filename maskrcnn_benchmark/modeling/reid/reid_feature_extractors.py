@@ -66,7 +66,18 @@ class FPN2MLPFeatureExtractor(nn.Module):
             self.fc6 = make_fc(input_size, representation_size, use_gn)
             self.fc7 = make_fc(representation_size, representation_size, use_gn)
 
-    def forward(self, x):
+        scales = cfg.MODEL.ROI_BOX_HEAD.POOLER_SCALES
+        sampling_ratio = cfg.MODEL.ROI_BOX_HEAD.POOLER_SAMPLING_RATIO
+        pooler = Pooler(
+            output_size=(resolution, resolution),
+            scales=scales,
+            sampling_ratio=sampling_ratio,
+        )
+        self.pooler = pooler
+
+    def forward(self, x, proposals):
+        x = self.pooler(x, proposals)
+        x = x.view(x.size(0), -1)
         if self.cfg.REID.USE_DIFF_FEAT:
             x = F.relu(self.fc6(x))
             x = F.relu(self.fc7(x))
