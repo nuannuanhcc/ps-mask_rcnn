@@ -23,18 +23,22 @@ MODEL:
     POOLER_RESOLUTION: 7
     POOLER_SCALES: (0.125, 0.0625, 0.03125, 0.015625)
     POOLER_SAMPLING_RATIO: 2
-    FEATURE_EXTRACTOR: "FPN2MLPFeatureExtractor"
+    FEATURE_EXTRACTOR: "FPN2MLPFeatureExtractor"  # "FPN2MLPFeatureExtractor", "FPNXconv1fcFeatureExtractor"
+    NUM_STACKED_CONVS: 1
     PREDICTOR: "FPNPredictor"
   RETINANET:
-    NUM_CLASSES: 2
     SCALES_PER_OCTAVE: 3
     STRADDLE_THRESH: -1
     USE_C5: False
     FG_IOU_THRESHOLD: 0.5
     BG_IOU_THRESHOLD: 0.4
+    NUM_CLASSES: 2
+    DETECTIONS_PER_IMG: 100 # default:100
+    SUBSAMPLE_TOP_N: 0 # default:0
+
 DATASETS:
   TRAIN: ("sysu_train",) # sysu_train, prw_train
-  TEST: ("sysu_test",) # sysu_test, prw_test
+  TEST: ("sysu_test", "sysu_query",) # sysu_test, sysu_query, prw_test, prw_query
 INPUT:
   MIN_SIZE_TRAIN: (800,)
   MAX_SIZE_TRAIN: 1333
@@ -47,3 +51,8 @@ SOLVER:
   WEIGHT_DECAY: 0.0001
   STEPS: (30000, 40000)
   MAX_ITER: 45000
+REID:
+  USE_REID: True
+  USE_DIFF_FEAT: True
+  LOSS_SCALE: 1.0
+  OUT_CHANNELS: 2048

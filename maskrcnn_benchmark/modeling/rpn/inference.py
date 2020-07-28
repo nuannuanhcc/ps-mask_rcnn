@@ -67,7 +67,7 @@ class RPNPostProcessor(torch.nn.Module):
             gt_box.add_field("objectness", torch.ones(len(gt_box), device=device))
 
         proposals = [
-            cat_boxlist((proposal, gt_box))
+            cat_boxlist((gt_box, proposal))
             for proposal, gt_box in zip(proposals, gt_boxes)
         ]
 
@@ -142,7 +142,7 @@ class RPNPostProcessor(torch.nn.Module):
         boxlists = list(zip(*sampled_boxes))
         boxlists = [cat_boxlist(boxlist) for boxlist in boxlists]
 
-        if num_levels > 1:
+        if num_levels >= 1:
             boxlists = self.select_over_all_levels(boxlists)
 
         # append ground-truth bboxes to proposals

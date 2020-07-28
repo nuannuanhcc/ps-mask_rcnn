@@ -12,6 +12,7 @@ from maskrcnn_benchmark.data import make_data_loader
 from maskrcnn_benchmark.utils.comm import get_world_size, synchronize
 from maskrcnn_benchmark.utils.metric_logger import MetricLogger
 from maskrcnn_benchmark.engine.inference import inference
+from maskrcnn_benchmark.modeling.reid.loss import make_reid_loss_evaluator
 
 from apex import amp
 
@@ -68,6 +69,7 @@ def do_train(
     if cfg.MODEL.KEYPOINT_ON:
         iou_types = iou_types + ("keypoints",)
     dataset_names = cfg.DATASETS.TEST
+    reid_loss_evaluator = make_reid_loss_evaluator(cfg)
 
     for iteration, (images, targets, _) in enumerate(data_loader, start_iter):
         
@@ -81,7 +83,10 @@ def do_train(
         images = images.to(device)
         targets = [target.to(device) for target in targets]
 
-        loss_dict = model(images, targets)
+        loss_dict, reid_feats = model(images, targets)
+
+        loss_reid = reid_loss_evaluator(*reid_feats)
+        loss_dict.update({"loss_reid": loss_reid, })
 
         losses = sum(loss for loss in loss_dict.values())
 
@@ -93,8 +98,9 @@ def do_train(
         optimizer.zero_grad()
         # Note: If mixed precision is not used, this ends up doing nothing
         # Otherwise apply loss scaling for mixed-precision recipe
-        with amp.scale_loss(losses, optimizer) as scaled_losses:
-            scaled_losses.backward()
+        # with amp.scale_loss(losses, optimizer) as scaled_losses:
+        #     scaled_losses.backward()
+        losses.backward()
         optimizer.step()
         scheduler.step()
 

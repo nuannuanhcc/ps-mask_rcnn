@@ -42,21 +42,28 @@ class ROIBoxHead(torch.nn.Module):
             with torch.no_grad():
                 proposals = self.loss_evaluator.subsample(proposals, targets)
 
+        elif targets is not None:
+            proposals = targets
         # extract features that will be fed to the final classifier. The
         # feature_extractor generally corresponds to the pooler + heads
-        x = self.feature_extractor(features, proposals)
+        x1, x2 = self.feature_extractor(features, proposals)
         # final classifier that converts the features into predictions
-        class_logits, box_regression = self.predictor(x)
+        class_logits, box_regression = self.predictor(x2)
 
         if not self.training:
-            result = self.post_processor((class_logits, box_regression), proposals)
-            return x, result, {}
+            if targets is not None:
+                result = targets
+            else:
+                box_per_img = [len(i) for i in proposals]
+                x1 = x1.split(box_per_img)  # for
+                result = self.post_processor((class_logits, box_regression), proposals)
+            return x1, result, {}
 
         loss_classifier, loss_box_reg = self.loss_evaluator(
             [class_logits], [box_regression]
         )
         return (
-            x,
+            x1,
             proposals,
             dict(loss_classifier=loss_classifier, loss_box_reg=loss_box_reg),
         )

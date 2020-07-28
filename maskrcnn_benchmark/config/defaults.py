@@ -348,6 +348,8 @@ _C.MODEL.RETINANET.INFERENCE_TH = 0.05
 
 # NMS threshold used in RetinaNet
 _C.MODEL.RETINANET.NMS_TH = 0.4
+_C.MODEL.RETINANET.DETECTIONS_PER_IMG = 100
+_C.MODEL.RETINANET.SUBSAMPLE_TOP_N = 0
 
 
 # ---------------------------------------------------------------------------- #
@@ -450,7 +452,18 @@ _C.TEST.BBOX_AUG.MAX_SIZE = 4000
 # Horizontal flip at each scale
 _C.TEST.BBOX_AUG.SCALE_H_FLIP = False
 
-_C.TEST.GALLERY_SIZE = 50
+_C.TEST.GALLERY_SIZE = 100
+
+# ---------------------------------------------------------------------------- #
+# Reid
+# ---------------------------------------------------------------------------- #
+_C.REID = CN()
+_C.REID.USE_REID = False
+_C.REID.OUT_CHANNELS = 2048
+_C.REID.USE_RES3_4 = False
+_C.REID.USE_DIFF_FEAT = False
+_C.REID.LOSS_SCALE = 1.0
+
 # ---------------------------------------------------------------------------- #
 # Misc options
 # ---------------------------------------------------------------------------- #

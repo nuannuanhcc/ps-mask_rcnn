@@ -6,6 +6,7 @@ from torch import nn
 from .inference import  make_retinanet_postprocessor
 from .loss import make_retinanet_loss_evaluator
 from ..anchor_generator import make_anchor_generator_retinanet
+from .retinanet_box_subsample import make_retinanet_box_subsample
 
 from maskrcnn_benchmark.modeling.box_coder import BoxCoder
 
@@ -100,14 +101,17 @@ class RetinaNetModule(torch.nn.Module):
         head = RetinaNetHead(cfg, in_channels)
         box_coder = BoxCoder(weights=(10., 10., 5., 5.))
 
+        box_selector_train = make_retinanet_postprocessor(cfg, box_coder, is_train=True)
         box_selector_test = make_retinanet_postprocessor(cfg, box_coder, is_train=False)
 
         loss_evaluator = make_retinanet_loss_evaluator(cfg, box_coder)
 
         self.anchor_generator = anchor_generator
         self.head = head
+        self.box_selector_train = box_selector_train
         self.box_selector_test = box_selector_test
         self.loss_evaluator = loss_evaluator
+        self.box_subsumple = make_retinanet_box_subsample(cfg)
 
     def forward(self, images, features, targets=None):
         """
@@ -129,10 +133,17 @@ class RetinaNetModule(torch.nn.Module):
  
         if self.training:
             return self._forward_train(anchors, box_cls, box_regression, targets)
+        elif targets is not None:
+            return targets, {}
         else:
             return self._forward_test(anchors, box_cls, box_regression)
 
     def _forward_train(self, anchors, box_cls, box_regression, targets):
+        with torch.no_grad():
+            boxes = self.box_selector_train(
+                anchors, box_cls, box_regression, targets
+            )
+            boxes = self.box_subsumple(boxes, targets)
 
         loss_box_cls, loss_box_reg = self.loss_evaluator(
             anchors, box_cls, box_regression, targets
@@ -141,7 +152,7 @@ class RetinaNetModule(torch.nn.Module):
             "loss_retina_cls": loss_box_cls,
             "loss_retina_reg": loss_box_reg,
         }
-        return anchors, losses
+        return boxes, losses
 
     def _forward_test(self, anchors, box_cls, box_regression):
         boxes = self.box_selector_test(anchors, box_cls, box_regression)
