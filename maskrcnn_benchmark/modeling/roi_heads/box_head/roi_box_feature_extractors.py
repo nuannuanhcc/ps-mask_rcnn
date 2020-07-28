@@ -15,7 +15,6 @@ class ResNet50Conv5ROIFeatureExtractor(nn.Module):
     def __init__(self, config, in_channels):
         super(ResNet50Conv5ROIFeatureExtractor, self).__init__()
 
-        self.cfg = config
         resolution = config.MODEL.ROI_BOX_HEAD.POOLER_RESOLUTION
         scales = config.MODEL.ROI_BOX_HEAD.POOLER_SCALES
         sampling_ratio = config.MODEL.ROI_BOX_HEAD.POOLER_SAMPLING_RATIO
@@ -42,11 +41,9 @@ class ResNet50Conv5ROIFeatureExtractor(nn.Module):
         self.out_channels = head.out_channels
 
     def forward(self, x, proposals):
-        x1 = self.pooler(x, proposals)
-        x2 = self.head(x1)
-        if self.cfg.REID.USE_DIFF_FEAT:
-            return x1, x2
-        return x2, x2
+        x = self.pooler(x, proposals)
+        x = self.head(x)
+        return x
 
 
 @registry.ROI_BOX_FEATURE_EXTRACTORS.register("FPN2MLPFeatureExtractor")
@@ -58,7 +55,6 @@ class FPN2MLPFeatureExtractor(nn.Module):
     def __init__(self, cfg, in_channels):
         super(FPN2MLPFeatureExtractor, self).__init__()
 
-        self.cfg = cfg
         resolution = cfg.MODEL.ROI_BOX_HEAD.POOLER_RESOLUTION
         scales = cfg.MODEL.ROI_BOX_HEAD.POOLER_SCALES
         sampling_ratio = cfg.MODEL.ROI_BOX_HEAD.POOLER_SAMPLING_RATIO
@@ -77,13 +73,12 @@ class FPN2MLPFeatureExtractor(nn.Module):
 
     def forward(self, x, proposals):
         x = self.pooler(x, proposals)
-        x1 = x.view(x.size(0), -1)
+        x = x.view(x.size(0), -1)
 
-        x2 = F.relu(self.fc6(x1))
-        x2 = F.relu(self.fc7(x2))
-        if self.cfg.REID.USE_DIFF_FEAT:
-            return x1, x2
-        return x2, x2
+        x = F.relu(self.fc6(x))
+        x = F.relu(self.fc7(x))
+
+        return x
 
 
 @registry.ROI_BOX_FEATURE_EXTRACTORS.register("FPNXconv1fcFeatureExtractor")
@@ -95,7 +90,6 @@ class FPNXconv1fcFeatureExtractor(nn.Module):
     def __init__(self, cfg, in_channels):
         super(FPNXconv1fcFeatureExtractor, self).__init__()
 
-        self.cfg = cfg
         resolution = cfg.MODEL.ROI_BOX_HEAD.POOLER_RESOLUTION
         scales = cfg.MODEL.ROI_BOX_HEAD.POOLER_SCALES
         sampling_ratio = cfg.MODEL.ROI_BOX_HEAD.POOLER_SAMPLING_RATIO
@@ -143,13 +137,11 @@ class FPNXconv1fcFeatureExtractor(nn.Module):
         self.out_channels = representation_size
 
     def forward(self, x, proposals):
-        x1 = self.pooler(x, proposals)
-        x2 = self.xconvs(x1)
-        x2 = x2.view(x2.size(0), -1)
-        x2 = F.relu(self.fc6(x2))
-        if self.cfg.REID.USE_DIFF_FEAT:
-            return x1, x2
-        return x2, x2
+        x = self.pooler(x, proposals)
+        x = self.xconvs(x)
+        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc6(x))
+        return x
 
 
 def make_roi_box_feature_extractor(cfg, in_channels):

@@ -40,7 +40,7 @@ class FastRCNNLossComputation(object):
         match_quality_matrix = boxlist_iou(target, proposal)
         matched_idxs = self.proposal_matcher(match_quality_matrix)
         # Fast RCNN only need "labels" field for selecting the targets
-        target = target.copy_with_fields(["labels", "pid"])
+        target = target.copy_with_fields("labels")
         # get the targets corresponding GT for each proposal
         # NB: need to clamp the indices because we can have a single
         # GT in the image, and matched_idxs can be -2, which goes
@@ -52,7 +52,6 @@ class FastRCNNLossComputation(object):
     def prepare_targets(self, proposals, targets):
         labels = []
         regression_targets = []
-        pids = []
         for proposals_per_image, targets_per_image in zip(proposals, targets):
             matched_targets = self.match_targets_to_proposals(
                 proposals_per_image, targets_per_image
@@ -75,17 +74,10 @@ class FastRCNNLossComputation(object):
                 matched_targets.bbox, proposals_per_image.bbox
             )
 
-            pids_per_image = matched_targets.get_field("pid")
-            pids_per_image = pids_per_image.to(dtype=torch.int64)
-
-            pids_per_image[bg_inds] = -2
-            pids_per_image[ignore_inds] = -2
-            pids.append(pids_per_image)
-
             labels.append(labels_per_image)
             regression_targets.append(regression_targets_per_image)
 
-        return labels, regression_targets, pids
+        return labels, regression_targets
 
     def subsample(self, proposals, targets):
         """
@@ -98,19 +90,18 @@ class FastRCNNLossComputation(object):
             targets (list[BoxList])
         """
 
-        labels, regression_targets, pids = self.prepare_targets(proposals, targets)
+        labels, regression_targets = self.prepare_targets(proposals, targets)
         sampled_pos_inds, sampled_neg_inds = self.fg_bg_sampler(labels)
 
         proposals = list(proposals)
         # add corresponding label and regression_targets information to the bounding boxes
-        for labels_per_image, regression_targets_per_image, proposals_per_image, pids_per_image in zip(
-            labels, regression_targets, proposals, pids
+        for labels_per_image, regression_targets_per_image, proposals_per_image in zip(
+            labels, regression_targets, proposals
         ):
             proposals_per_image.add_field("labels", labels_per_image)
             proposals_per_image.add_field(
                 "regression_targets", regression_targets_per_image
             )
-            proposals_per_image.add_field("pid", pids_per_image)
 
         # distributed sampled proposals, that were obtained on all feature maps
         # concatenated via the fg_bg_sampler, into individual feature map levels
