@@ -118,7 +118,27 @@ class OIMLossComputation(nn.Module):
         loss_weight = torch.cat([torch.ones(self.num_pid).cuda(), torch.zeros(self.queue_size).cuda()])
 
         scalar = 10
-        loss_reid = F.cross_entropy(reid_result * scalar, pid_label, weight=loss_weight, ignore_index=-1)
+        scores = [result.get_field('scores') for result in results]
+        gt_scores = [score[:n] for (n, score) in zip(gt_box_pre_img, scores)]
+        de_scores = [score[n:] for (n, score) in zip(gt_box_pre_img, scores)]
+        scores = 1- torch.cat(gt_scores+de_scores)
+        losses=0
+        n=0
+        for i in range(scores.shape[0]):
+            if pid_label[i] == -1:
+                continue
+            loss = F.cross_entropy(reid_result[i].unsqueeze(0) * scalar, pid_label[i].unsqueeze(0),
+                                        weight=loss_weight, ignore_index=-1)
+            loss = torch.exp(-scores[i])*loss+scores[i]
+            losses+=loss
+            n+=1
+
+        # loss_reid = F.cross_entropy(reid_result * scalar, pid_label, weight=loss_weight, ignore_index=-1)
+        # for
+        if n == 0:
+            loss_reid = 0
+        else:
+            loss_reid = losses/n
         return loss_reid * self.cfg.REID.LOSS_SCALE
 
 
