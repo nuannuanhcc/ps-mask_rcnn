@@ -13,7 +13,7 @@ from maskrcnn_benchmark.utils.comm import get_world_size, synchronize
 from maskrcnn_benchmark.utils.metric_logger import MetricLogger
 from maskrcnn_benchmark.engine.inference import inference
 from maskrcnn_benchmark.modeling.reid.loss import make_reid_loss_evaluator
-
+import copy
 from apex import amp
 
 def reduce_loss_dict(loss_dict):
@@ -71,21 +71,28 @@ def do_train(
     dataset_names = cfg.DATASETS.TEST
     reid_loss_evaluator = make_reid_loss_evaluator(cfg)
 
-    for iteration, (images, targets, _) in enumerate(data_loader, start_iter):
+    if cfg.REID.USE_MOCO:
+        momentum_encoder = copy.deepcopy(model)
+        for param in momentum_encoder.parameters():
+            param.requires_grad_(False)
+
+    for iteration, (q_images, k_images, q_targets, k_targets, _) in enumerate(data_loader, start_iter):
         
-        if any(len(target) < 1 for target in targets):
-            logger.error(f"Iteration={iteration + 1} || Image Ids used for training {_} || targets Length={[len(target) for target in targets]}" )
+        if any(len(target) < 1 for target in q_targets):
+            logger.error(f"Iteration={iteration + 1} || Image Ids used for training {_} || targets Length={[len(target) for target in q_targets]}" )
             continue
         data_time = time.time() - end
         iteration = iteration + 1
         arguments["iteration"] = iteration
 
-        images = images.to(device)
-        targets = [target.to(device) for target in targets]
+        q_images, k_images = q_images.to(device), k_images.to(device)
+        q_targets = [target.to(device) for target in q_targets]
+        k_targets = [target.to(device) for target in k_targets]
 
-        loss_dict, reid_feats = model(images, targets)
+        loss_dict, reid_feats = model(q_images, q_targets)
+        reid_feats_key = momentum_encoder(k_images, k_targets, moco_flag=True)
 
-        loss_reid = reid_loss_evaluator(*reid_feats)
+        loss_reid = reid_loss_evaluator(*reid_feats, *reid_feats_key)
         loss_dict.update({"loss_reid": loss_reid, })
 
         losses = sum(loss for loss in loss_dict.values())
@@ -103,6 +110,10 @@ def do_train(
         losses.backward()
         optimizer.step()
         scheduler.step()
+
+        with torch.no_grad():
+            for k_param, q_param in zip(momentum_encoder.parameters(), model.parameters()):
+                torch.lerp(k_param.data, q_param.data, weight=1-0.9, out=k_param.data)
 
         batch_time = time.time() - end
         end = time.time()

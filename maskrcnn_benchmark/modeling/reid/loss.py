@@ -86,7 +86,7 @@ class OIMLossComputation(nn.Module):
         else:
             raise KeyError(cfg.DATASETS.TRAIN)
 
-        self.lut_momentum = 0.5
+        self.lut_momentum = 0.0
         self.out_channels = self.cfg.REID.OUT_CHANNELS
 
         self.register_buffer('lut', torch.zeros(self.num_pid, self.out_channels).cuda())
@@ -98,13 +98,13 @@ class OIMLossComputation(nn.Module):
         pids = [result.get_field('pid') for result in results]
 
         gt_features = [feat[:n] for (n, feat) in zip(gt_box_pre_img, features)]
-        de_features = [feat[n:] for (n, feat) in zip(gt_box_pre_img, features)]
+        # de_features = [feat[n:] for (n, feat) in zip(gt_box_pre_img, features)]
 
         gt_pids = [pid[:n] for (n, pid) in zip(gt_box_pre_img, pids)]
-        de_pids = [pid[n:] for (n, pid) in zip(gt_box_pre_img, pids)]
+        # de_pids = [pid[n:] for (n, pid) in zip(gt_box_pre_img, pids)]
 
-        features = torch.cat(gt_features+de_features)
-        pids = torch.cat(gt_pids+de_pids)
+        features = torch.cat(gt_features)#+de_features)
+        pids = torch.cat(gt_pids)#+de_pids)
         aux_label = pids  # threshold<0.7 pid=-2
 
         aux_label_np = aux_label.data.cpu().numpy()
@@ -118,27 +118,7 @@ class OIMLossComputation(nn.Module):
         loss_weight = torch.cat([torch.ones(self.num_pid).cuda(), torch.zeros(self.queue_size).cuda()])
 
         scalar = 10
-        scores = [result.get_field('scores') for result in results]
-        gt_scores = [score[:n] for (n, score) in zip(gt_box_pre_img, scores)]
-        de_scores = [score[n:] for (n, score) in zip(gt_box_pre_img, scores)]
-        scores = 1- torch.cat(gt_scores+de_scores)
-        losses=0
-        n=0
-        for i in range(scores.shape[0]):
-            if pid_label[i] == -1:
-                continue
-            loss = F.cross_entropy(reid_result[i].unsqueeze(0) * scalar, pid_label[i].unsqueeze(0),
-                                        weight=loss_weight, ignore_index=-1)
-            loss = torch.exp(-scores[i])*loss+scores[i]
-            losses+=loss
-            n+=1
-
-        # loss_reid = F.cross_entropy(reid_result * scalar, pid_label, weight=loss_weight, ignore_index=-1)
-        # for
-        if n == 0:
-            loss_reid = 0
-        else:
-            loss_reid = losses/n
+        loss_reid = F.cross_entropy(reid_result * scalar, pid_label, weight=loss_weight, ignore_index=-1)
         return loss_reid * self.cfg.REID.LOSS_SCALE
 
 
@@ -163,17 +143,16 @@ class CIRCLELossComputation(nn.Module):
         self.register_buffer('lut', torch.zeros(num_labeled, self.out_channels).cuda())
         self.register_buffer('queue', torch.zeros(num_unlabeled, self.out_channels).cuda())
 
-    def forward(self, features, results, targets):
-
+    def forward(self, features, results, targets, features_k, results_k, targets_k):
         gt_box_pre_img = [len(i) for i in targets]
         features = [result.get_field('reid_feat') for result in results]
         pids = [result.get_field('pid') for result in results]
 
         gt_features = [feat[:n] for (n, feat) in zip(gt_box_pre_img, features)]
-        de_features = [feat[n:] for (n, feat) in zip(gt_box_pre_img, features)]
+        # de_features = [feat[n:] for (n, feat) in zip(gt_box_pre_img, features)]
 
         gt_pids = [pid[:n] for (n, pid) in zip(gt_box_pre_img, pids)]
-        de_pids = [pid[n:] for (n, pid) in zip(gt_box_pre_img, pids)]
+        # de_pids = [pid[n:] for (n, pid) in zip(gt_box_pre_img, pids)]
 
         # features = torch.cat(gt_features+de_features)
         # pids = torch.cat(gt_pids+de_pids)
@@ -187,11 +166,27 @@ class CIRCLELossComputation(nn.Module):
 
         id_labeled = aux_label[aux_label > -1].to(torch.long)
         feat_labeled = features[aux_label > -1]
-        feat_unlabeled = features[aux_label == -1]
-        self.lut, _ = update_queue(self.lut, self.pointer[0], feat_labeled)
+        # feat_unlabeled = features[aux_label == -1]
 
-        self.id_inx, self.pointer[0] = update_queue(self.id_inx, self.pointer[0], id_labeled)
-        self.queue, self.pointer[1] = update_queue(self.queue, self.pointer[1], feat_unlabeled)
+        features_k = [result.get_field('reid_feat') for result in results_k]
+        features_k = torch.cat(features_k)
+        pids_k = [result.get_field('pid') for result in results_k]
+        pids_k = torch.cat(pids_k)
+
+        aux_label_k = pids_k  # threshold<0.7 pid=-2
+
+        aux_label_np_k = aux_label_k.data.cpu().numpy()
+        invalid_inds_k = np.where((aux_label_np_k < 0))
+        aux_label_np_k[invalid_inds_k] = -1
+
+        id_labeled_k = aux_label_k[aux_label_k > -1].to(torch.long)
+        feat_labeled_k = features_k[aux_label_k > -1]
+        feat_unlabeled_k = features_k[aux_label_k == -1]
+
+        self.lut, _ = update_queue(self.lut, self.pointer[0], feat_labeled_k)
+
+        self.id_inx, self.pointer[0] = update_queue(self.id_inx, self.pointer[0], id_labeled_k)
+        self.queue, self.pointer[1] = update_queue(self.queue, self.pointer[1], feat_unlabeled_k)
 
         queue_sim = torch.mm(feat_labeled, self.queue.t())
         lut_sim = torch.mm(feat_labeled, self.lut.t())
@@ -205,6 +200,6 @@ class CIRCLELossComputation(nn.Module):
 
 
 def make_reid_loss_evaluator(cfg):
-    loss_evaluator = OIMLossComputation(cfg)
-    # loss_evaluator = CIRCLELossComputation(cfg)
+    # loss_evaluator = OIMLossComputation(cfg)
+    loss_evaluator = CIRCLELossComputation(cfg)
     return loss_evaluator

@@ -1,6 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 import random
-
+from PIL import ImageFilter
 import torch
 import torchvision
 from torchvision.transforms import functional as F
@@ -73,6 +73,7 @@ class RandomHorizontalFlip(object):
             target = target.transpose(0)
         return image, target
 
+
 class RandomVerticalFlip(object):
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -83,21 +84,50 @@ class RandomVerticalFlip(object):
             target = target.transpose(1)
         return image, target
 
+
 class ColorJitter(object):
     def __init__(self,
                  brightness=None,
                  contrast=None,
                  saturation=None,
                  hue=None,
+                 prob=0.2
                  ):
         self.color_jitter = torchvision.transforms.ColorJitter(
             brightness=brightness,
             contrast=contrast,
             saturation=saturation,
             hue=hue,)
+        self.prob = prob
 
     def __call__(self, image, target):
-        image = self.color_jitter(image)
+        if random.random() < self.prob:
+            image = self.color_jitter(image)
+        return image, target
+
+
+class RandomGrayscale(object):
+    def __init__(self, prob=0.2):
+        self.prob = prob
+
+    def __call__(self, image, target):
+        num_output_channels = 1 if image.mode == 'L' else 3
+        if random.random() < self.prob:
+            image = F.to_grayscale(image, num_output_channels=num_output_channels)
+        return image, target
+
+
+class GaussianBlur(object):
+    """Gaussian blur augmentation in SimCLR https://arxiv.org/abs/2002.05709"""
+
+    def __init__(self, sigma=[.1, 2.], prob=0.5):
+        self.sigma = sigma
+        self.prob = prob
+
+    def __call__(self, image, target):
+        if random.random() < self.prob:
+            sigma = random.uniform(self.sigma[0], self.sigma[1])
+            image = image.filter(ImageFilter.GaussianBlur(radius=sigma))
         return image, target
 
 

@@ -26,21 +26,29 @@ def build_transforms(cfg, is_train=True):
     normalize_transform = T.Normalize(
         mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD, to_bgr255=to_bgr255
     )
-    color_jitter = T.ColorJitter(
-        brightness=brightness,
-        contrast=contrast,
-        saturation=saturation,
-        hue=hue,
-    )
 
-    transform = T.Compose(
-        [
-            color_jitter,
-            T.Resize(min_size, max_size),
-            T.RandomHorizontalFlip(flip_horizontal_prob),
-            T.RandomVerticalFlip(flip_vertical_prob),
-            T.ToTensor(),
-            normalize_transform,
-        ]
-    )
+    if is_train:
+        transform = T.Compose(
+            [
+                # T.ColorJitter(brightness, contrast, saturation, hue, prob=1.0),
+                # T.ColorJitter(0.4, 0.4, 0.4, 0.0, prob=1.0),
+                # T.RandomGrayscale(prob=1.0),
+                # T.GaussianBlur(prob=1.0),
+                T.Resize(min_size, max_size),
+                T.RandomHorizontalFlip(flip_horizontal_prob),
+                T.RandomVerticalFlip(flip_vertical_prob),
+                T.ToTensor(),
+                normalize_transform,
+            ]
+        )
+    else:
+        transform = T.Compose(
+            [
+                T.Resize(min_size, max_size),
+                T.RandomHorizontalFlip(flip_horizontal_prob),
+                T.RandomVerticalFlip(flip_vertical_prob),
+                T.ToTensor(),
+                normalize_transform,
+            ]
+        )
     return transform
