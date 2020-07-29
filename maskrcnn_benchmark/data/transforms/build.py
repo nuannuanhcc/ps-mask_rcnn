@@ -31,7 +31,7 @@ def build_transforms(cfg, is_train=True):
         transform = T.Compose(
             [
                 # T.ColorJitter(brightness, contrast, saturation, hue, prob=1.0),
-                T.ColorJitter(0.3, 0.3, 0.3, 0.0, prob=0.5),
+                T.ColorJitter(0.4, 0.4, 0.4, 0.0, prob=0.5),
                 # T.RandomGrayscale(prob=1.0),
                 # T.GaussianBlur(prob=1.0),
                 T.Resize(min_size, max_size),
