@@ -64,10 +64,9 @@ class SYSUDataset(torch.utils.data.Dataset):
         target = target.clip_to_image(remove_empty=True)
 
         if self.transforms is not None:
-            q_img, q_target = self.transforms(img, target)
-            k_img, k_target = self.transforms(img, target)
+            img, target = self.transforms(img, target)
 
-        return q_img, k_img, q_target, k_target, index
+        return img, target, index
 
     def __len__(self):
         return len(self.ids)

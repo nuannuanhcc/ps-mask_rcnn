@@ -459,7 +459,6 @@ _C.TEST.GALLERY_SIZE = 100
 # ---------------------------------------------------------------------------- #
 _C.REID = CN()
 _C.REID.USE_REID = False
-_C.REID.USE_MOCO = False
 _C.REID.OUT_CHANNELS = 2048
 _C.REID.USE_RES3_4 = False
 _C.REID.USE_DIFF_FEAT = False
