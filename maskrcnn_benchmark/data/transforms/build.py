@@ -33,7 +33,7 @@ def build_transforms(cfg, is_train=True):
                 # T.ColorJitter(brightness, contrast, saturation, hue, prob=1.0),
                 # T.ColorJitter(0.4, 0.4, 0.4, 0.0, prob=0.5),
                 # T.RandomGrayscale(prob=1.0),
-                T.GaussianBlur(prob=0.4),
+                T.GaussianBlur(prob=0.5),
                 T.Resize(min_size, max_size),
                 T.RandomHorizontalFlip(flip_horizontal_prob),
                 T.RandomVerticalFlip(flip_vertical_prob),
