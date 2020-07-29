@@ -129,7 +129,7 @@ class CIRCLELossComputation(nn.Module):
 
         if 'sysu' in self.cfg.DATASETS.TRAIN[0]:
             num_labeled = 0
-            num_unlabeled = 256
+            num_unlabeled = 512
         elif 'prw' in self.cfg.DATASETS.TRAIN[0]:
             num_labeled = 8192
             num_unlabeled = 8192
