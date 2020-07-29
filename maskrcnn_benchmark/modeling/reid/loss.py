@@ -79,7 +79,7 @@ class OIMLossComputation(nn.Module):
 
         if 'sysu' in self.cfg.DATASETS.TRAIN[0]:
             self.num_pid = 5532
-            self.queue_size = 4096
+            self.queue_size = 2048
         elif 'prw' in self.cfg.DATASETS.TRAIN[0]:
             self.num_pid = 483
             self.queue_size = 500
