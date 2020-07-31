@@ -112,7 +112,7 @@ def do_train(
 
         with torch.no_grad():
             for k_param, q_param in zip(momentum_encoder.parameters(), model.parameters()):
-                torch.lerp(k_param.data, q_param.data, weight=1-0.5, out=k_param.data)
+                torch.lerp(k_param.data, q_param.data, weight=1-0.7, out=k_param.data)
 
         batch_time = time.time() - end
         end = time.time()
