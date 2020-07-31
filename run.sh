@@ -1,4 +1,4 @@
-export DIR="./train_log/7_31_10"
+export DIR="./train_log/7_31_11"
 export NGPUS=1
 export LR=$(echo "$NGPUS*0.001"|bc)
 export BATCH=$(echo "$NGPUS*4"|bc)
